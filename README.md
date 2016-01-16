@@ -7,9 +7,9 @@ The only layer 3 feature used is determining whether two IP addresses are on the
 
 Based on official Trema examples:
 
-*[learning_switch](https://github.com/trema/learning_switch)
-*[routing_switch](https://github.com/trema/routing_switch)
-*[topology](https://github.com/trema/topology)
+* [learning_switch](https://github.com/trema/learning_switch)
+* [routing_switch](https://github.com/trema/routing_switch)
+* [topology](https://github.com/trema/topology)
 
 Prerequisites
 -------------
