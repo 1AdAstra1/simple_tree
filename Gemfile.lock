@@ -226,6 +226,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  activesupport
   aruba
   codeclimate-test-reporter
   coveralls

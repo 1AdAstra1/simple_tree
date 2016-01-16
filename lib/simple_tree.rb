@@ -1,4 +1,5 @@
 $LOAD_PATH.unshift File.join(__dir__, '../vendor/topology/lib')
+require 'active_support/core_ext/module/delegation'
 require 'fdb'
 require 'topology_controller'
 require 'switch'
@@ -10,8 +11,9 @@ require 'tor_switch'
 # Convention: aggregate switches have datapath IDs > 16, TOR switches: < 16 
 # All end networks are assumed to have a mask of 255.255.255.0
 class SimpleTree < Trema::Controller
-  timer_event :age_fdbs, interval: 5.sec
-  timer_event :lldp_discovery, interval: 1.sec
+  DEFAULT_TIMEOUT = 5.sec
+  timer_event :age_fdbs, interval: DEFAULT_TIMEOUT
+  timer_event :flood_lldp_frames, interval: 1.sec
   attr_reader :topo, :tor_switches, :aggr_switches, :all_switches
 
   def start(_argv)
@@ -25,9 +27,8 @@ class SimpleTree < Trema::Controller
     @all_switches[datapath_id] = Switch.create(datapath_id, @topo.topology, FDB.new)
   end
 
-  def features_reply(datapath_id, features_reply)
-    topo.features_reply(datapath_id, features_reply)
-  end
+  delegate :switch_disconnected, :features_reply, :flood_lldp_frames, 
+  :port_modify, to: :@topo
 
   def packet_in(datapath_id, packet_in)
     logger.info("Packet arrived into switch #{datapath_id} in port #{packet_in.in_port} from #{packet_in.source_ip_address} to #{packet_in.destination_ip_address}") unless packet_in.lldp?  
@@ -61,6 +62,7 @@ class SimpleTree < Trema::Controller
   def flow_mod(packet_in, port_no)
     send_flow_mod_add(
       packet_in.datapath_id,
+      idle_timeout: DEFAULT_TIMEOUT,
       match: ExactMatch.new(packet_in),
       actions: SendOutPort.new(port_no)
     )
@@ -81,10 +83,6 @@ class SimpleTree < Trema::Controller
     end
     topo_controller.start _argv
     topo_controller
-  end
-
-  def lldp_discovery
-    topo.flood_lldp_frames
   end
 end
 

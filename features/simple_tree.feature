@@ -51,34 +51,10 @@ Feature: "Simple Tree Controller" example
       link "tor2", "host2-2"
       link "tor2", "aggr1"
       link "tor2", "aggr2"
-      """
+      """ 
 
   @sudo
-  Scenario: Run
-    Given I trema run "lib/simple_tree.rb" interactively with the configuration "trema.conf"
-    When I run `trema send_packets --source host1-1 --dest host1-2 --npackets 2`
-    Then the total number of received packets should be:
-      | host1-1 | host1-2 | host2-1 | host2-2 |
-      |       0 |       2 |       0 |       0 |
-    When I run `trema send_packets --source host2-1 --dest host2-2 --npackets 3`
-    Then the total number of received packets should be:
-      | host1-1 | host1-2 | host2-1 | host2-2 |
-      |       0 |       2 |       0 |       3 |
-    When I run `trema send_packets --source host2-2 --dest host1-1 --npackets 2`
-    Then the total number of received packets should be:
-      | host1-1 | host1-2 | host2-1 | host2-2 |
-      |       2 |       2 |       0 |       3 |
-    When I run `trema send_packets --source host1-2 --dest host2-1 --npackets 4`
-    Then the total number of received packets should be:
-      | host1-1 | host1-2 | host2-1 | host2-2 |
-      |       2 |       2 |       4 |       3 |
-    When I run `trema send_packets --source host1-1 --dest host2-2 --npackets 1`
-    And the total number of received packets should be:
-      | host1-1 | host1-2 | host2-1 | host2-2 |
-      |       2 |       2 |       4 |       4 |
-
-  @sudo
-  Scenario: Run as a daemon
+  Scenario: Hosts on the same TOR switch can communicate, as well as hosts on different TOR switches
     Given I trema run "lib/simple_tree.rb" with the configuration "trema.conf"
     When I successfully run `trema send_packets --source host1-1 --dest host1-2 --npackets 2`
     Then the total number of received packets should be:
@@ -101,4 +77,30 @@ Feature: "Simple Tree Controller" example
       | host1-1 | host1-2 | host2-1 | host2-2 |
       |       2 |       2 |       4 |       4 |
 
-  
+  @sudo
+  Scenario: One of the aggregate switches dies, the other is picked up in 5s
+    Given I trema run "lib/simple_tree.rb" with the configuration "trema.conf"
+    And I successfully run `trema send_packets --source host1-1 --dest host2-2 --npackets 1`
+    When I successfully run `trema stop aggr1`
+    And sleep 5
+    And I successfully run `trema send_packets --source host1-1 --dest host2-2 --npackets 1`
+    Then the total number of received packets should be:
+        | host1-1 | host1-2 | host2-1 | host2-2 |
+        |       0 |       0 |       0 |       2 |
+
+  @sudo
+  Scenario: One of the TOR-to-aggregate links dies, the other switch is picked up in 5s, the other still works
+    Given I trema run "lib/simple_tree.rb" with the configuration "trema.conf"
+    And I successfully run `trema send_packets --source host1-1 --dest host2-2 --npackets 1`
+
+    When I delete the link between "aggr1" and "tor1"
+    And sleep 5
+    And I successfully run `trema send_packets --source host1-1 --dest host2-2 --npackets 2`
+    Then the total number of received packets should be:
+        | host1-1 | host1-2 | host2-1 | host2-2 |
+        |       0 |       0 |       0 |       3 |
+
+    When I successfully run `trema send_packets --source host2-1 --dest host1-2 --npackets 2`
+    Then the total number of received packets should be:
+        | host1-1 | host1-2 | host2-1 | host2-2 |
+        |       0 |       2 |       0 |       3 |

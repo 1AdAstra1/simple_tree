@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'trema'
+gem 'activesupport'
 
 group :development, :test do
   gem 'aruba', require: false
