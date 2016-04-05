@@ -26,6 +26,8 @@ Install
 ```
 $ git clone https://github.com/1AdAstra1/simple_tree.git
 $ cd simple tree
+$ git submodule init
+$ git submodule update
 $ bundle install
 ```
 
@@ -37,15 +39,15 @@ The `lib/simple_tree.rb` is an OpenFlow controller implementation
 that emulates a layer 2 switch. Run this like so:
 
 ```
-$ ./bin/trema run ./lib/simple_tree.rb -c trema.multi.conf
+$ trema run ./lib/simple_tree.rb -c trema.multi.conf
 ```
 
 Then send some packets from client1 to client2 (hosts on the same subnet), and show received packet
 stats of client:
 
 ```
-$ ./bin/trema send_packets --source client1 --dest client2 --npackets 10
-$ ./bin/trema show_stats host2
+$ trema send_packets --source client1 --dest client2 --npackets 10
+$ trema show_stats host2
 Packets received:
  192.168.4.1 -> 192.168.4.2 = 10 packets
 ```
@@ -54,8 +56,8 @@ You can also send some packets from client1 to monitoring (a 'server' on a diffe
 stats of monitoring:
 
 ```
-$ ./bin/trema send_packets --source client1 --dest monitoring --npackets 10
-$ ./bin/trema show_stats monitoring
+$ trema send_packets --source client1 --dest monitoring --npackets 10
+$ trema show_stats monitoring
 Packets received:
  192.168.4.1 -> 192.168.3.2 = 10 packets
 ```
